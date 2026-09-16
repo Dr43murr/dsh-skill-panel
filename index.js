@@ -30,7 +30,7 @@ const MAX_VERSIONS = 10;
 
 /** frontmatter 白名单：agent/面板只能改这些键。 */
 const FRONTMATTER_WHITELIST = new Set([
-  'name', 'description', 'brief', 'whenToUse', 'prompt', 'savesTokens',
+  'name', 'description', 'brief', 'whenToUse', 'prompt', 'savesTokens', 'audience',
 ]);
 
 function readBody(req) {
@@ -251,6 +251,7 @@ export function apply(ctx, config) {
       whenToUse: front.whenToUse ?? '',
       prompt: front.prompt ?? '',
       savesTokens: Number(front.savesTokens) > 0 ? Number(front.savesTokens) : 0,
+      audience: front.audience ?? 'user',
       content: raw, intro, sections,
       steps: extractSteps(body),
       chars: body.trim().length,
@@ -264,7 +265,7 @@ export function apply(ctx, config) {
     for (const entry of entries) {
       if (entry.name.startsWith('.')) continue;
       const sk = await loadSkill(entry);
-      if (sk !== undefined) out.push(sk);
+      if (sk !== undefined && sk.audience !== 'agent') out.push(sk);
     }
     const now = Date.now();
     for (const sk of out) {

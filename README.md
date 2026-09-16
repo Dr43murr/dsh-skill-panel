@@ -11,7 +11,8 @@ dsh plugin --profile web add dsh-skill-panel
 ## 功能
 - 悬浮卡片面板（输入框旁 🐳技能）
 - 卡片：短简介 / 流程分段 / 实际调用次数
-- 多选组合 → 插入为流程 或 保存为新技能
+- 组合（进阶，⧉ 组合二级菜单）→ 插入为流程 或 保存为新技能
+- agent 内部技能（`audience: agent`）自动从面板隐藏，主界面只留用户真正会点的能力
 - 垃圾体检：从未使用 / 长期未用 / 空壳 / 疑似重复（纯本地判定）
 - 回收站：删除可还原
 - 账本：价值估算（估算节省 token，非实测）
@@ -19,7 +20,7 @@ dsh plugin --profile web add dsh-skill-panel
 
 ## Skill 格式
 
-标准 SKILL.md + 扩展 frontmatter 字段：`brief`（短标签）、`prompt`（对话式调用语）、`savesTokens`（估算基线）。
+标准 SKILL.md + 扩展 frontmatter 字段：`brief`（短标签）、`prompt`（对话式调用语）、`savesTokens`（估算基线）、`audience`（`agent` 则从用户面板隐藏）。
 
 ## API
 

@@ -1,6 +1,6 @@
 {
   "name": "dsh-skill-panel",
-  "version": "1.1.0",
+  "version": "1.1.3",
   "description": "Skill visual panel: view each skill's flow and raw text as cards, and edit/save them in place (old version backed up as .bak).",
   "type": "module",
   "license": "MIT",
@@ -39,7 +39,7 @@
   "dshhub": {
     "schemaVersion": 1,
     "displayName": "技能记忆层 Skill Panel",
-    "summary": "把 agent 经验沉淀为可复用的 skill：卡片管理、多选组合、垃圾清理、用量排序、价值估算账本。",
+    "summary": "把 agent 经验沉淀为可复用的 skill：卡片点选即用、用量排序、价值估算账本、垃圾清理；agent 内部技能自动隐藏。",
     "categories": [
       "效率",
       "技能",
