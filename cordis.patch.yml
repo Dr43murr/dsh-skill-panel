@@ -1,0 +1,6 @@
+# dsh-skill-panel bundle patch：一个双面插件（host 半 + 浏览器半）。
+# 行 id 必须等于 host 半导出的 cordis `name`。
+# 技能根目录由 host 半从 $DSH_HOME/skills 推导，无需在此配置。
+- insert:
+    - id: skill-panel
+      name: 'dsh-skill-panel'
