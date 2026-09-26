@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.6
+- 文档与仓库同步（代码与 1.1.5 完全一致）：
+- 安装改为 `dsh plugin --profile web add github:Dr43murr/dsh-skill-panel`；README 里加了警示——npm 上同名的 `dsh-skill-panel` 是别人的包
+- README 按代码实况重写：「🔍 检测 / 🧹 清除」的真实行为、API 路由现况（面板只用 `GET /list /stats` + `POST /event /delete`）、去掉失效的 PLAN.md 引用
+- DESIGN.md 顶部加「版本现状（v1.1.5）」说明，正文保留为设计史
+
 ## 1.1.5
 - 移除 ⧉ 组合、♻ 回收站、↻ 刷新三个按钮，头部只留「🔍 检测 / 🧹 清除」
 

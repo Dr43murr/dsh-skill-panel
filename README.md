@@ -1,6 +1,6 @@
 # dsh-skill-panel · 技能记忆层
 
-把 DeepSeek Harness 里的 skill 变成可见、可点、可沉淀的流程资产。当前版本 **1.1.5**。
+把 DeepSeek Harness 里的 skill 变成可见、可点、可沉淀的流程资产。当前版本 **1.1.6**。
 
 ## 一句话
 
@@ -13,10 +13,10 @@
 dsh plugin --profile web add github:Dr43murr/dsh-skill-panel
 ```
 
-或下载 [Releases](https://github.com/Dr43murr/dsh-skill-panel/releases) 里的 `dsh-skill-panel-1.1.5.tgz`，然后：
+或下载 [Releases](https://github.com/Dr43murr/dsh-skill-panel/releases) 里的 `dsh-skill-panel-1.1.6.tgz`，然后：
 
 ```sh
-dsh plugin --profile web add ./dsh-skill-panel-1.1.5.tgz
+dsh plugin --profile web add ./dsh-skill-panel-1.1.6.tgz
 ```
 
 > ⚠️ 别用 `dsh plugin --profile web add dsh-skill-panel`：npm 上同名的 `dsh-skill-panel` 是别人的包，不是这一份。
@@ -56,6 +56,7 @@ Base `/api/skill-panel`。面板实际用到：
 
 ## 版本
 
+- **1.1.6** — 文档与仓库同步：安装命令改为从本仓库装（npm 同名包是别人的）、README/API 按代码实况对齐、DESIGN 顶部加版本现状；代码同 1.1.5
 - **1.1.5** — 极简头部：移除 ⧉ 组合、♻ 回收站、↻ 刷新，只留「🔍 检测 / 🧹 清除」
 - 完整改动看 [CHANGELOG.md](CHANGELOG.md)；设计与踩过的坑看 [DESIGN.md](DESIGN.md)
 

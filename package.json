@@ -1,6 +1,6 @@
 {
   "name": "dsh-skill-panel",
-  "version": "1.1.5",
+  "version": "1.1.6",
   "description": "Skill visual panel: view each skill's flow and raw text as cards, and edit/save them in place (old version backed up as .bak).",
   "type": "module",
   "license": "MIT",
