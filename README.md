@@ -1,6 +1,6 @@
 # dsh-skill-panel · 技能记忆层
 
-把 DeepSeek Harness 里的 skill 变成可见、可点、可沉淀的流程资产。
+把 DeepSeek Harness 里的 skill 变成可见、可点、可沉淀的流程资产。当前版本 **1.1.5**。
 
 ## 一句话
 
@@ -9,16 +9,25 @@
 ## 安装
 
 ```sh
-dsh plugin --profile web add dsh-skill-panel
+# 从本仓库直接装（推荐）
+dsh plugin --profile web add github:Dr43murr/dsh-skill-panel
 ```
+
+或下载 [Releases](https://github.com/Dr43murr/dsh-skill-panel/releases) 里的 `dsh-skill-panel-1.1.5.tgz`，然后：
+
+```sh
+dsh plugin --profile web add ./dsh-skill-panel-1.1.5.tgz
+```
+
+> ⚠️ 别用 `dsh plugin --profile web add dsh-skill-panel`：npm 上同名的 `dsh-skill-panel` 是别人的包，不是这一份。
 
 ## 怎么用
 
-面板在输入框旁的「🐳 技能」按钮里，几个操作：
+面板在输入框旁的「🐳 技能」按钮里（挂载点 `conversation.input.dock`），三个操作：
 
 - **点卡片 = 调用 skill**：点一下，输入框里出现一个 `🐳 skill:<名字>` 贴纸。这个贴纸**只是标记**，代表「你接下来这条消息要用这个 skill」——**发送后 agent 才会真正执行**，点卡片本身不会执行。
-- **🔍 检测**：让 agent 检查本次对话有没有被反复使用的流程，有就提炼成一个新 skill（先给你确认再落盘），没有就回「无新增 skill」。
-- **🧹 清除**：勾选不要的 skill，确认后删除。
+- **🔍 检测**：把「检查本次对话里有没有反复用到的流程，有就提炼成新 skill，没有就回『无新增 skill』」这段指令写进输入框，交给 agent 执行（先给你确认再落盘）。
+- **🧹 清除**：勾选不要的 skill，确认后删除（文件移入 `skills/.trash/`，需要时可手动还原）。
 
 ## 特点
 
@@ -38,6 +47,18 @@ dsh plugin --profile web add dsh-skill-panel
 
 ## API
 
-Base `/api/skill-panel`：`GET /list /stats`；`POST /event /invoke /propose /apply /save /delete`。
+Base `/api/skill-panel`。面板实际用到：
 
-详见 DESIGN.md / PLAN.md。
+- `GET /list`、`GET /stats`
+- `POST /event`、`POST /delete`
+
+仓库还保留了面板已不调用的路由：`GET /audit /trash`，`POST /invoke /propose /apply /save /restore /purge /compose`。
+
+## 版本
+
+- **1.1.5** — 极简头部：移除 ⧉ 组合、♻ 回收站、↻ 刷新，只留「🔍 检测 / 🧹 清除」
+- 完整改动看 [CHANGELOG.md](CHANGELOG.md)；设计与踩过的坑看 [DESIGN.md](DESIGN.md)
+
+## License
+
+MIT

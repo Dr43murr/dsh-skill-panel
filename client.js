@@ -10,7 +10,6 @@ window.__ModuleLoader__.load({
     const API = "/api/skill-panel";
     const SOURCE = "skill";
     const TRIGGER = "@";
-    const POLL_MS = 3000;
 
     const V = {
       bg: "var(--dsw-alias-bg-layer-2, #2c2c2e)",
@@ -36,7 +35,7 @@ window.__ModuleLoader__.load({
       return p.length > 0 ? p : "请使用「" + sk.name + "」技能：";
     };
     const briefOf = (sk) => (sk.brief && sk.brief.length > 0 ? sk.brief : (sk.description || "(无简介)"));
-const markOf = (sk) => "【" + briefOf(sk) + "】";
+const markOf = (sk) => "🐳 skill:" + sk.id;
     const usedOf = (sk) => ((sk.stats ? sk.stats.invoked + sk.stats.autoLoaded : 0));
 
     const S = {
@@ -255,114 +254,30 @@ const markOf = (sk) => "【" + briefOf(sk) + "】";
       );
     }
 
-    function AuditView(props) {
-      const [report, setReport] = React.useState(null);
+    function ClearView(props) {
       const [picked, setPicked] = React.useState([]);
       const [busy, setBusy] = React.useState(false);
-
-      const load = React.useCallback(() => {
-        fetch(API + "/audit", { headers: { "cache-control": "no-store" } })
-          .then((r) => r.json()).then((j) => { if (j && j.ok) setReport(j.report); }).catch(() => {});
-      }, []);
-      React.useEffect(() => { load(); }, [load]);
-      if (report === null) return h("div", { style: { color: V.text3, fontSize: "12px" } }, "体检中…");
-
+      const list = props.skills || [];
       const toggle = (id) => setPicked((p) => p.includes(id) ? p.filter((x) => x !== id) : p.concat([id]));
-      const clean = () => {
+      const clear = () => {
         setBusy(true);
         Promise.all(picked.map((id) => fetch(API + "/delete", {
           method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ id })
-        }))).then(() => { setPicked([]); setBusy(false); load(); props.onChanged(); });
+        }))).then(() => { setPicked([]); setBusy(false); props.onChanged(); });
       };
-      const row = (id, text, why) => h("div", { key: id + text, style: S.auditRow },
-        h("input", { type: "checkbox", checked: picked.includes(id), onChange: () => toggle(id) }),
-        h("span", { style: { flex: 1 } }, text),
-        h("span", { style: { color: V.text3 } }, why));
-
-      const groups = [
-        ["从未使用", report.unused.map((x) => row(x.id, x.name, x.ageDays + " 天"))],
-        ["长期未用", report.stale.map((x) => row(x.id, x.name, "调用过 " + x.invoked + " 次 · " + x.idleDays + " 天未用"))],
-        ["空壳内容", report.stub.map((x) => row(x.id, x.name, x.chars + " 字"))]
-      ];
-      const anyFindings = report.unused.length + report.stale.length + report.stub.length;
-
+      if (list.length === 0) return h("div", { style: { color: V.text3, fontSize: "12px" } }, "还没有技能。");
       return h("div", null,
         h("div", { style: { fontSize: "11.5px", color: V.text3, marginBottom: "6px" } },
-          "共 " + report.total + " 个技能 · 只看实际调用，点击不计 · 全本地判定"),
-        groups.map(([title, rows]) => rows.length > 0
-          ? h("div", { key: title }, h("div", { style: S.secHead }, title + " (" + rows.length + ")"), rows) : null),
-        anyFindings === 0 ? h("div", { style: { color: V.ok, fontSize: "12px", padding: "6px 2px" } }, "✓ 没有需要清理的技能") : null,
-        report.dup.length > 0 ? h("div", null,
-            h("div", { style: S.secHead }, "疑似重复 (" + report.dup.length + ")"),
-            report.dup.map((d, i) => h("div", { key: i, style: Object.assign({}, S.auditRow, { color: V.text3 }) },
-              h("span", { style: { flex: 1 } }, d.aName + "  ↔  " + d.bName),
-              h("span", null, (d.score * 100).toFixed(0) + "%")))) : null,
-        h("div", { style: { marginTop: "10px" } },
-          picked.length > 0 ? h("button", { style: S.miniDanger, disabled: busy, onClick: clean },
-            busy ? "清理中…" : "移入回收站 (" + picked.length + ")") : null,
-          h("button", { style: S.mini, onClick: load }, "重新体检")),
-        h("div", { style: Object.assign({}, S.secHead, { color: V.text2, marginTop: "14px" }) }, "从对话提炼"),
-        h("div", { style: { fontSize: "11.5px", color: V.text3, lineHeight: 1.6, marginBottom: "6px" } },
-          "提炼需要判断力，交给 agent 做；面板只负责发起。"),
-        h("button", { style: S.miniPrimary, onClick: () => props.onDistill() }, "提炼出可重复使用的技能")
-      );
-    }
-
-    function TrashView(props) {
-      const [entries, setEntries] = React.useState(null);
-      const load = React.useCallback(() => {
-        fetch(API + "/trash", { headers: { "cache-control": "no-store" } })
-          .then((r) => r.json()).then((j) => { if (j && j.ok) setEntries(j.entries); }).catch(() => {});
-      }, []);
-      React.useEffect(() => { load(); }, [load]);
-      const act = (route, entry) => fetch(API + route, {
-        method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ entry })
-      }).then((r) => r.json()).then((j) => {
-        props.onFlash(j && j.ok ? "已处理" : ("失败：" + ((j && j.error) || "?")));
-        load(); props.onChanged();
-      });
-
-      if (entries === null) return h("div", { style: { color: V.text3, fontSize: "12px" } }, "读取中…");
-      if (entries.length === 0) return h("div", { style: { color: V.ok, fontSize: "12px", padding: "6px 2px" } }, "✓ 回收站是空的");
-
-      return h("div", null,
-        h("div", { style: { fontSize: "11.5px", color: V.text3, marginBottom: "6px" } },
-          entries.length + " 项（删除的都在这里，可还原）"),
-        entries.map((e) => h("div", { key: e.entry, style: S.auditRow },
-          h("span", { style: { flex: 1 } }, e.id),
-          h("span", { style: { color: V.text3, fontSize: "10.5px" } }, e.deletedAt.replace("T", " ").slice(0, 16)),
-          h("button", { style: S.mini, onClick: () => act("/restore", e.entry) }, "还原"),
-          h("button", { style: S.mini, onClick: () => act("/purge", e.entry) }, "彻底删"))));
-    }
-
-    function ComposeView(props) {
-      const toggle = (sk) => props.setPicked((p) => p.some((x) => x.id === sk.id)
-        ? p.filter((x) => x.id !== sk.id) : p.concat([sk]));
-      const list = props.skills || [];
-      return h("div", null,
-        h("div", { style: { fontSize: "11.5px", color: V.text3, lineHeight: 1.6, marginBottom: "6px" } },
-          "进阶：勾选多个技能，组合成一条流程，或合并保存为一个新技能。日常一般用不到。"),
-        list.length === 0 ? h("div", { style: { color: V.text3, fontSize: "12px" } }, "还没有可组合的技能。") : null,
+          "勾选要清除的 skill，确认后删除"),
         list.map((sk) => h("div", { key: sk.id, style: Object.assign({}, S.auditRow, { cursor: "pointer" }),
-            onClick: () => toggle(sk) },
+            onClick: () => toggle(sk.id) },
           h("input", { type: "checkbox", readOnly: true, style: { pointerEvents: "none" },
-            checked: props.picked.some((x) => x.id === sk.id) }),
+            checked: picked.includes(sk.id) }),
           h("span", { style: { flex: 1 } }, sk.name),
           h("span", { style: { color: V.text3 } }, cut(briefOf(sk), 18)))),
-        props.picked.length > 0 ? h("div", { style: S.pane },
-          h("div", { style: { fontSize: "11px", color: V.text2, marginBottom: "6px" } },
-            "已选 " + props.picked.length + " 个：" + cut(props.picked.map((p) => p.name).join(" → "), 30)),
-          props.composing
-            ? h("div", { style: S.row },
-                h("input", { style: Object.assign({}, S.inp, { flex: 1 }), value: props.newName,
-                  placeholder: "新技能名（字母数字-_）", onChange: (e) => props.setNewName(e.target.value),
-                  onKeyDown: (e) => { if (e.key === "Enter") props.composePicked(); } }),
-                h("button", { style: S.miniPrimary, onClick: props.composePicked }, "生成"),
-                h("button", { style: S.mini, onClick: () => props.setComposing(false) }, "取消"))
-            : h("div", { style: S.row },
-                h("button", { style: S.miniPrimary, onClick: props.insertPicked }, "插入为流程"),
-                h("button", { style: S.miniAccent, onClick: () => props.setComposing(true) }, "保存为技能"),
-                h("button", { style: S.mini, onClick: () => props.setPicked([]) }, "清空"))) : null);
+        h("div", { style: { marginTop: "10px" } },
+          picked.length > 0 ? h("button", { style: S.miniDanger, disabled: busy, onClick: clear },
+            busy ? "清除中…" : "清除选中 (" + picked.length + ")") : null));
     }
 
     function SkillPanel(props) {
@@ -372,11 +287,7 @@ const markOf = (sk) => "【" + briefOf(sk) + "】";
       const [stats, setStats] = React.useState(null);
       const [error, setError] = React.useState("");
       const [flash, setFlash] = React.useState("");
-      const [auto, setAuto] = React.useState(true);
-      const [picked, setPicked] = React.useState([]);
-      const [composing, setComposing] = React.useState(false);
-      const [newName, setNewName] = React.useState("");
-  const [staged, setStaged] = React.useState([]);
+      const [staged, setStaged] = React.useState([]);
       const sigRef = React.useRef("");
 
       const load = React.useCallback((silent) => {
@@ -396,12 +307,7 @@ const markOf = (sk) => "【" + briefOf(sk) + "】";
           .then((r) => r.json()).then((j) => { if (j && j.ok) setStats(j.stats); }).catch(() => {});
       }, []);
 
-      React.useEffect(() => { if (open && skills === null) load(false); }, [open, skills, load]);
-      React.useEffect(() => {
-        if (!open || !auto) return undefined;
-        const id = setInterval(() => load(true), POLL_MS);
-        return () => clearInterval(id);
-      }, [open, auto, load]);
+      React.useEffect(() => { if (open) load(true); }, [open, load]);
       React.useEffect(() => {
         if (!flash) return undefined;
         const t = setTimeout(() => setFlash(""), 2400);
@@ -413,6 +319,11 @@ const markOf = (sk) => "【" + briefOf(sk) + "】";
         body: JSON.stringify({ skillId: sk.id, type, source: "panel" })
       }).then(() => load(true)).catch(() => {});
 
+      const detect = () => {
+        props.insertText("检查本次对话：有没有哪套流程被我反复用了 ≥2 次？有就用 skill-edit 把它提炼成一个新 skill（先写 name/简介/步骤给我确认，别直接落盘）；没有就只回一句「无新增skill」。");
+        setFlash("已发起检测：agent 会检查对话里的重复流程");
+      };
+
       const pickOne = (sk) => {
         const r = props.insertSkill(sk, phraseOf(sk));
         if (r !== "dup") emitEvent(sk, "clicked");
@@ -421,27 +332,7 @@ const markOf = (sk) => "【" + briefOf(sk) + "】";
           : r === "fallback" ? "已加入 ✓（发送后执行）→ " + cut(briefOf(sk), 16)
           : "插入失败");
       };
-      const insertPicked = () => {
-        if (picked.length === 0) return;
-        const ok = props.insertPipeline(picked);
-        picked.forEach((s) => emitEvent(s, "clicked"));
-        setFlash(ok ? "已插入 " + picked.length + " 个技能的流程" : "插入失败");
-        setPicked([]);
-      };
-      const composePicked = () => {
-        const name = newName.trim();
-        if (!/^[A-Za-z0-9_-]{1,64}$/.test(name)) { setFlash("名字只能用字母数字和 -_"); return; }
-        fetch(API + "/compose", { method: "POST", headers: { "content-type": "application/json" },
-          body: JSON.stringify({ ids: picked.map((p) => p.id), name }) })
-          .then((r) => r.json())
-          .then((j) => {
-            if (j && j.ok) { setFlash("已生成新技能：" + j.id); setComposing(false); setNewName(""); setPicked([]); load(false); }
-            else setFlash("生成失败：" + ((j && j.error) || "?"));
-          })
-          .catch((e) => setFlash("生成失败：" + e.message));
-      };
-
-      const onDeleted = (name) => { setFlash("已删除「" + name + "」→ 回收站"); setPicked([]); load(false); };
+      const onDeleted = (name) => { setFlash("已清除「" + name + "」"); load(false); };
 
       const backBtn = view !== "list"
         ? h("button", { style: S.pill, title: "返回技能列表", onClick: () => setView("list") }, "← 返回")
@@ -464,35 +355,16 @@ const markOf = (sk) => "【" + briefOf(sk) + "】";
         open ? h("div", { style: S.panel, onClick: (e) => e.stopPropagation() },
           h("div", { style: S.head },
             backBtn,
-            h("span", { style: S.headTitle }, view === "list" ? "技能面板" : view === "audit" ? "整理" : view === "trash" ? "回收站" : "组合技能"),
-            h("button", { style: Object.assign({}, S.pill, view === "compose" ? S.pillAccent : null),
-              title: "组合技能（进阶）", onClick: () => { const nv = view === "compose" ? "list" : "compose"; setView(nv); setPicked([]); setComposing(false); setNewName(""); } },
-              "⧉ 组合"),
-            view === "list" ? h("button", { style: Object.assign({}, S.pill, auto ? S.pillOn : null),
-              title: auto ? "自动同步中" : "已停用", onClick: () => { const n = !auto; setAuto(n); if (n) load(false); } },
-              auto ? "⟳ 同步" : "⟳ 停") : null,
-            h("button", { style: Object.assign({}, S.pill, view === "audit" ? S.pillAccent : null),
-              title: "垃圾体检 / 从对话提炼", onClick: () => setView(view === "audit" ? "list" : "audit") }, "🧹"),
-            h("button", { style: Object.assign({}, S.pill, view === "trash" ? S.pillAccent : null),
-              title: "回收站", onClick: () => setView(view === "trash" ? "list" : "trash") }, "♻"),
-            h("button", { style: S.iconBtn, title: "刷新", onClick: () => load(false) }, "↻"),
+            h("span", { style: S.headTitle }, view === "list" ? "技能面板" : "清除 Skill"),
+            h("button", { style: S.pill, title: "检测本次对话的重复流程，提炼成新 skill", onClick: detect }, "🔍 检测"),
+            h("button", { style: Object.assign({}, S.pill, view === "clear" ? S.pillAccent : null),
+              title: "清除 Skill", onClick: () => setView(view === "clear" ? "list" : "clear") }, "🧹"),
             h("button", { style: S.iconBtn, title: "关闭", onClick: () => setOpen(false) }, "×")
           ),
 
           h("div", { style: S.body },
             error ? h("div", { style: { color: V.err, fontSize: "12px" } }, error) : null,
-            view === "audit" ? h(AuditView, {
-              onChanged: () => load(false),
-              onDistill: () => {
-                props.insertText("从我们刚才的对话里，提炼出可重复使用的技能：用 skill-edit 的极简方式写入 skills 目录，先回一句你打算写什么再动手。");
-                setFlash("已把提炼要求写进输入框");
-              }
-            }) : null,
-            view === "trash" ? h(TrashView, { onChanged: () => load(false), onFlash: setFlash }) : null,
-            view === "compose" ? h(ComposeView, {
-              skills: skills || [], picked, setPicked, composing, setComposing,
-              newName, setNewName, insertPicked, composePicked
-            }) : null,
+            view === "clear" ? h(ClearView, { skills: skills || [], onChanged: () => load(false) }) : null,
             view === "list" ? h(React.Fragment, null,
               !error && skills === null ? h("div", { style: { color: V.text3, fontSize: "12px" } }, "加载中…") : null,
               skills && skills.length === 0 ? h("div", { style: { color: V.text3, fontSize: "12px" } }, "还没有技能。") : null,
@@ -527,7 +399,7 @@ const markOf = (sk) => "【" + briefOf(sk) + "】";
         catch (e) { return false; }
       };
 
-      const markOf = (sk) => "【" + briefOf(sk) + "】";
+      const markOf = (sk) => "🐳 skill:" + sk.id;
       const insertSkill = (sessionId, sk) => {
         const actx = ctx.sessions.scope(sessionId);
         const conversation = actx.get("conversation");
@@ -537,16 +409,11 @@ const markOf = (sk) => "【" + briefOf(sk) + "】";
         const mark = markOf(sk);
         if (draft.indexOf(mark) !== -1) return "dup";
         actx.emit("slash/input-insert-text", {
-          text: mark + phraseOf(sk),
+          text: mark + " " + phraseOf(sk),
           span: { start: draft.length, end: draft.length, draftRev: (state && state.draftRev) || 0 }
         });
         return "ok";
       };
-      const insertPipeline = (sessionId, list) => {
-        const body = list.map((s, i) => (i + 1) + ". " + phraseOf(s)).join("\n");
-        return insertText(sessionId, "依次执行以下步骤：\n" + body + "\n");
-      };
-
       try {
         ctx.effect(() => ctx.inputTriggers.registerSource({
           trigger: TRIGGER, name: SOURCE,
@@ -578,7 +445,6 @@ const markOf = (sk) => "【" + briefOf(sk) + "】";
               return st && typeof st.draft === "string" ? st.draft : "";
             },
             insertSkill: (sk, phrase) => insertSkill(sessionId, sk),
-            insertPipeline: (list) => insertPipeline(sessionId, list),
             insertText: (text) => insertText(sessionId, text, true),
             insertAsk: (sk, want) => insertText(sessionId, "修改技能「" + sk.name + "」：" + want, true)
           })
